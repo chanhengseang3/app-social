@@ -9,7 +9,7 @@ const navigationItems = [
 ];
 
 const viewTitles = {
-  "/": "Workplace pulse in one place",
+  "/": "Home feed for the whole company",
   "/profile": "Personal profile and activity",
   "/directory": "Find coworkers by team and role",
   "/messages": "Direct and group conversations",
@@ -39,6 +39,7 @@ function App() {
   const [employees, setEmployees] = useState(teamConnectMockData.employees);
   const [currentUser, setCurrentUser] = useState(teamConnectMockData.currentUser);
   const [connections, setConnections] = useState(teamConnectMockData.friendConnections);
+  const [feedPosts, setFeedPosts] = useState(teamConnectMockData.feedPosts);
   const [recognitionPosts, setRecognitionPosts] = useState(teamConnectMockData.recognitionPosts);
   const [feedbackItems, setFeedbackItems] = useState(teamConnectMockData.feedbackItems);
   const [chatThreads] = useState(teamConnectMockData.chatThreads);
@@ -53,6 +54,7 @@ function App() {
     title: "",
   });
   const [messageDraft, setMessageDraft] = useState("");
+  const [postDraft, setPostDraft] = useState("");
   const deferredDirectoryQuery = useDeferredValue(directoryQuery);
   const deferredKnowledgeQuery = useDeferredValue(knowledgeQuery);
 
@@ -159,6 +161,27 @@ function App() {
       ...prev,
     ]);
     setFeedbackForm((prev) => ({ ...prev, title: "" }));
+  };
+
+  const handlePostSubmit = (event) => {
+    event.preventDefault();
+    if (!postDraft.trim()) return;
+    setFeedPosts((prev) => [
+      {
+        id: `p${prev.length + 1}`,
+        authorId: currentUser.id,
+        authorName: currentUser.name,
+        authorRole: currentUser.role,
+        audience: "Company-wide",
+        timeLabel: "Just now",
+        content: postDraft.trim(),
+        likes: 0,
+        comments: 0,
+        topic: "Employee Post",
+      },
+      ...prev,
+    ]);
+    setPostDraft("");
   };
 
   const handleMessageSubmit = (event) => {
@@ -355,13 +378,15 @@ function App() {
         </header>
 
         {activePath === "/" && (
-          <DashboardView
+          <HomeView
             announcements={teamConnectMockData.announcements}
             companyNews={teamConnectMockData.companyNews}
             currentUser={currentUser}
-            dashboardStats={teamConnectMockData.dashboardStats}
+            feedPosts={feedPosts}
             feedbackItems={feedbackItems}
-            recognitionPosts={recognitionPosts}
+            onPostSubmit={handlePostSubmit}
+            postDraft={postDraft}
+            setPostDraft={setPostDraft}
           />
         )}
         {activePath === "/profile" && (
@@ -425,39 +450,99 @@ function App() {
   );
 }
 
-function DashboardView({ announcements, companyNews, currentUser, dashboardStats, feedbackItems, recognitionPosts }) {
+function HomeView({
+  announcements,
+  companyNews,
+  currentUser,
+  feedPosts,
+  feedbackItems,
+  onPostSubmit,
+  postDraft,
+  setPostDraft,
+}) {
   return (
     <div className="view-grid">
-      <section className="panel panel-span-2">
+      <section className="panel panel-span-2 home-compose-panel">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Today</span>
-            <h3>Welcome back, {currentUser.name.split(" ")[0]}</h3>
+            <span className="eyebrow">Home</span>
+            <h3>What is happening across TeamConnect?</h3>
           </div>
-          <span className="soft-tag">{currentUser.department}</span>
+          <span className="soft-tag">Company-wide feed</span>
         </div>
-        <div className="metric-grid">
-          {dashboardStats.map((stat) => (
-            <article className="metric-card" key={stat.id}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </article>
-          ))}
-        </div>
+        <form className="stack-form compact-form" onSubmit={onPostSubmit}>
+          <label>
+            Share an update
+            <textarea
+              className="compact-textarea"
+              rows="3"
+              value={postDraft}
+              onChange={(event) => setPostDraft(event.target.value)}
+              placeholder={`What would you like to share, ${currentUser.name.split(" ")[0]}?`}
+            />
+          </label>
+          <div className="feed-compose-actions">
+            <span className="muted-copy">Posts stay in local React state for demo purposes.</span>
+            <button className="primary-button" type="submit">
+              Post Update
+            </button>
+          </div>
+        </form>
       </section>
 
       <section className="panel">
         <div className="section-heading">
-          <h3>Recognition Feed</h3>
-          <span className="soft-tag">Live Demo</span>
+          <div>
+            <span className="eyebrow">For You</span>
+            <h3>Quick profile view</h3>
+          </div>
+          <span className="soft-tag">{currentUser.department}</span>
+        </div>
+        <article className="list-card profile-summary-card">
+          <div className="avatar-large">{currentUser.initials}</div>
+          <div>
+            <strong>{currentUser.name}</strong>
+            <p>{currentUser.role}</p>
+            <p>{currentUser.location}</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="panel panel-span-2">
+        <div className="section-heading">
+          <h3>Employee Feed</h3>
+          <span className="soft-tag">{feedPosts.length} posts</span>
         </div>
         <div className="stack-list">
-          {recognitionPosts.slice(0, 3).map((post) => (
-            <article className="list-card" key={post.id}>
-              <strong>
-                {post.from} to {post.to}
-              </strong>
-              <p>{post.message}</p>
+          {feedPosts.map((post) => (
+            <article className="list-card feed-card" key={post.id}>
+              <div className="feed-card-header">
+                <div className="feed-author">
+                  <div className="avatar-large">
+                    {post.authorName
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                  <div>
+                    <strong>{post.authorName}</strong>
+                    <p>
+                      {post.authorRole} • {post.audience}
+                    </p>
+                  </div>
+                </div>
+                <div className="feed-meta">
+                  <span className="soft-tag">{post.topic}</span>
+                  <span className="muted-copy">{post.timeLabel}</span>
+                </div>
+              </div>
+              <p className="feed-content">{post.content}</p>
+              <div className="feed-actions">
+                <span>{post.likes} likes</span>
+                <span>{post.comments} comments</span>
+              </div>
             </article>
           ))}
         </div>
@@ -466,10 +551,10 @@ function DashboardView({ announcements, companyNews, currentUser, dashboardStats
       <section className="panel">
         <div className="section-heading">
           <h3>Announcements</h3>
-          <span className="soft-tag">{announcements.length} updates</span>
+          <span className="soft-tag">{announcements.length}</span>
         </div>
         <div className="stack-list">
-          {announcements.map((item) => (
+          {announcements.slice(0, 2).map((item) => (
             <article className="list-card" key={item.id}>
               <strong>{item.title}</strong>
               <p>{item.summary}</p>
@@ -480,11 +565,11 @@ function DashboardView({ announcements, companyNews, currentUser, dashboardStats
 
       <section className="panel">
         <div className="section-heading">
-          <h3>Company News</h3>
+          <h3>Trending News</h3>
           <span className="soft-tag">Highlights</span>
         </div>
         <div className="stack-list">
-          {companyNews.map((item) => (
+          {companyNews.slice(0, 2).map((item) => (
             <article className="list-card" key={item.id}>
               <strong>{item.headline}</strong>
               <p>{item.excerpt}</p>
@@ -493,18 +578,17 @@ function DashboardView({ announcements, companyNews, currentUser, dashboardStats
         </div>
       </section>
 
-      <section className="panel panel-span-2">
+      <section className="panel">
         <div className="section-heading">
           <h3>Feedback Pulse</h3>
-          <span className="soft-tag">{feedbackItems.length} items tracked</span>
+          <span className="soft-tag">{feedbackItems.length} open items</span>
         </div>
-        <div className="feedback-row">
-          {feedbackItems.slice(0, 3).map((item) => (
-            <article className="feedback-card" key={item.id}>
-              <span className="soft-tag">{item.type}</span>
+        <div className="stack-list">
+          {feedbackItems.slice(0, 2).map((item) => (
+            <article className="list-card" key={item.id}>
               <strong>{item.title}</strong>
               <p>
-                {item.submittedBy} • {item.status}
+                {item.type} • {item.status}
               </p>
             </article>
           ))}

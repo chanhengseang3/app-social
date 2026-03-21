@@ -226,6 +226,7 @@ textarea:focus {
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 20px;
   padding: 20px;
+  align-items: start;
 }
 
 .background-grid {
@@ -251,13 +252,18 @@ textarea:focus {
   padding: 26px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 24px;
+  align-self: start;
+  position: sticky;
+  top: 20px;
 }
 
 .nav-list {
   display: grid;
   gap: 10px;
-  margin: 28px 0;
+  margin: 0;
+  flex: 1;
 }
 
 .nav-item {
@@ -285,6 +291,7 @@ textarea:focus {
   border-radius: 24px;
   background: var(--panel-strong);
   border: 1px solid var(--line);
+  margin-top: auto;
 }
 
 .avatar-large,
@@ -311,15 +318,32 @@ textarea:focus {
 .content-shell {
   display: grid;
   gap: 20px;
+  align-content: start;
+  align-self: start;
 }
 
 .hero-panel {
   border-radius: 32px;
   padding: 28px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: flex-start;
+  display: block;
+  position: relative;
+  padding-right: 220px;
+  overflow: hidden;
+}
+
+.hero-panel > :first-child {
+  max-width: 1200px;
+}
+
+.hero-panel h1 {
+  margin: 12px 0 10px;
+  font-size: clamp(2.4rem, 3.8vw, 4rem);
+  line-height: 0.92;
+}
+
+.hero-panel p {
+  margin: 0;
+  max-width: 860px;
 }
 
 .eyebrow {
@@ -330,9 +354,14 @@ textarea:focus {
 }
 
 .hero-actions {
+  position: absolute;
+  top: 28px;
+  right: 28px;
   display: grid;
   gap: 14px;
   justify-items: end;
+  align-content: start;
+  min-width: 150px;
 }
 
 .status-chip,
@@ -383,6 +412,65 @@ textarea:focus {
   align-items: flex-start;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.feed-compose-actions,
+.feed-card-header,
+.feed-author,
+.feed-actions,
+.feed-meta {
+  display: flex;
+  gap: 12px;
+}
+
+.feed-compose-actions,
+.feed-card-header {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.compact-form {
+  gap: 14px;
+}
+
+.compact-textarea {
+  min-height: 116px;
+  resize: vertical;
+}
+
+.feed-author {
+  align-items: center;
+}
+
+.feed-meta {
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.feed-content {
+  font-size: 1rem;
+  margin: 0 0 14px;
+  color: #eef4ff;
+}
+
+.feed-actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.home-compose-panel {
+  align-content: start;
+}
+
+.profile-summary-card {
+  display: grid;
+  gap: 14px;
+}
+
+.feed-card {
+  padding: 18px;
 }
 
 .metric-grid,
@@ -515,6 +603,7 @@ textarea:focus {
 
   .sidebar {
     min-height: auto;
+    position: static;
   }
 
   .panel-span-2 {
@@ -522,11 +611,13 @@ textarea:focus {
   }
 
   .hero-panel {
-    flex-direction: column;
+    padding-right: 28px;
   }
 
   .hero-actions {
+    position: static;
     justify-items: start;
+    margin-top: 18px;
   }
 }
 
@@ -555,5 +646,16 @@ textarea:focus {
 
   .profile-banner {
     grid-template-columns: 1fr;
+  }
+
+  .feed-compose-actions,
+  .feed-card-header,
+  .feed-author {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .feed-meta {
+    align-items: flex-start;
   }
 }

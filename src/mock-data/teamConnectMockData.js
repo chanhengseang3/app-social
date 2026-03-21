@@ -68,11 +68,59 @@ export const employees = [
   },
 ];
 
-export const dashboardStats = [
-  { id: "stat-1", label: "Employees", value: 128 },
-  { id: "stat-2", label: "Announcements", value: 6 },
-  { id: "stat-3", label: "Unread Messages", value: 14 },
-  { id: "stat-4", label: "Open Feedback Items", value: 9 },
+export const feedPosts = [
+  {
+    id: "p1",
+    authorId: "u5",
+    authorName: "Sophia Patel",
+    authorRole: "Internal Communications Lead",
+    audience: "Company-wide",
+    timeLabel: "35m ago",
+    content:
+      "We just published the spring retreat schedule. Please check the announcement section for travel timing, breakout sessions, and the team dinner plan.",
+    likes: 24,
+    comments: 7,
+    topic: "Announcement",
+  },
+  {
+    id: "p2",
+    authorId: "u2",
+    authorName: "Marcus Chen",
+    authorRole: "Frontend Engineer",
+    audience: "Engineering",
+    timeLabel: "1h ago",
+    content:
+      "Finished the new profile card prototype for TeamConnect today. The cleaner layout gives us more room for bios, team tags, and recognition history.",
+    likes: 18,
+    comments: 4,
+    topic: "Product Update",
+  },
+  {
+    id: "p3",
+    authorId: "u3",
+    authorName: "Priya Nair",
+    authorRole: "Product Designer",
+    audience: "Design and Product",
+    timeLabel: "3h ago",
+    content:
+      "Looking for quick feedback on the directory search experience. If you test it this week, tell me whether the filters feel clear enough for first-time users.",
+    likes: 14,
+    comments: 9,
+    topic: "Feedback Request",
+  },
+  {
+    id: "p4",
+    authorId: "u4",
+    authorName: "Jordan Alvarez",
+    authorRole: "Engineering Manager",
+    audience: "Leadership",
+    timeLabel: "Yesterday",
+    content:
+      "Shoutout to everyone who helped with Q2 planning. We closed the review cycle earlier than expected and already have a better cross-team dependency map.",
+    likes: 31,
+    comments: 11,
+    topic: "Team Win",
+  },
 ];
 
 export const announcements = [
@@ -273,7 +321,7 @@ export const messagesByThread = {
 };
 
 export const appNavigation = [
-  { id: "nav-1", label: "Dashboard", path: "/" },
+  { id: "nav-1", label: "Home", path: "/" },
   { id: "nav-2", label: "Directory", path: "/directory" },
   { id: "nav-3", label: "Messages", path: "/messages" },
   { id: "nav-4", label: "Announcements", path: "/announcements" },
@@ -287,7 +335,7 @@ const teamConnectMockData = {
   demoCredentials,
   currentUser,
   employees,
-  dashboardStats,
+  feedPosts,
   announcements,
   companyNews,
   recognitionPosts,
