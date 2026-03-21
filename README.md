@@ -16,4 +16,3 @@ TeamConnect is a UI-focused internal social networking app prototype for employe
 - `docs/requirement.md`: product and technical requirements
 - `src/App.jsx`: main TeamConnect UI
 - `src/mock-data/teamConnectMockData.js`: demo content for React screens
-- `AGENTS.md`: contributor guidelines for this repository
