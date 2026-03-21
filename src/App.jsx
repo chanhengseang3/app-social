@@ -50,6 +50,7 @@ function App() {
   const [selectedThreadId, setSelectedThreadId] = useState(teamConnectMockData.chatThreads[0].id);
   const [recognitionForm, setRecognitionForm] = useState({
     to: teamConnectMockData.employees[1].name,
+    type: "Recommend",
     message: "",
   });
   const [feedbackForm, setFeedbackForm] = useState({
@@ -145,6 +146,7 @@ function App() {
         id: `r${prev.length + 1}`,
         from: currentUser.name,
         to: recognitionForm.to,
+        type: recognitionForm.type,
         date: new Date().toISOString().slice(0, 10),
         message: recognitionForm.message.trim(),
       },
@@ -815,12 +817,20 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
         <form className="stack-form" onSubmit={onSubmit}>
           <label>
             Recognize
-              <select value={form.to} onChange={(event) => onChange((prev) => ({ ...prev, to: event.target.value }))}>
+            <select value={form.to} onChange={(event) => onChange((prev) => ({ ...prev, to: event.target.value }))}>
               {employees
                 .filter((employee) => employee.name !== currentUser.name)
                 .map((employee) => (
                   <option key={employee.id}>{employee.name}</option>
                 ))}
+            </select>
+          </label>
+          <label>
+            Recognition Type
+            <select value={form.type} onChange={(event) => onChange((prev) => ({ ...prev, type: event.target.value }))}>
+              <option>Recommend</option>
+              <option>Send Kudos</option>
+              <option>Performance Champion</option>
             </select>
           </label>
           <label>
@@ -846,9 +856,12 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
         <div className="stack-list">
           {posts.map((post) => (
             <article className="list-card" key={post.id}>
-              <strong>
-                {post.from} to {post.to}
-              </strong>
+              <div className="section-heading">
+                <strong>
+                  {post.from} to {post.to}
+                </strong>
+                <span className="soft-tag">{post.type}</span>
+              </div>
               <p>{post.message}</p>
               <p className="muted-copy">{post.date}</p>
             </article>
