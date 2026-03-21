@@ -1,12 +1,12 @@
 export const demoCredentials = {
-  email: "ava.lee@teamconnect.demo",
+  email: "chanheng.seang@teamconnect.demo",
   password: "demo1234",
 };
 
 export const currentUser = {
   id: "u1",
-  name: "Ava Lee",
-  initials: "AL",
+  name: "Chanheng Seang",
+  initials: "CS",
   role: "People Operations Manager",
   department: "Operations",
   location: "San Francisco, CA",
@@ -144,7 +144,7 @@ export const announcements = [
     id: "a3",
     title: "Q2 Planning Templates Published",
     category: "Leadership",
-    author: "Ava Lee",
+    author: "Chanheng Seang",
     date: "2026-03-15",
     summary: "Department leads can now access the updated planning templates and timeline in the knowledge base.",
   },
@@ -177,7 +177,7 @@ export const companyNews = [
 export const recognitionPosts = [
   {
     id: "r1",
-    from: "Ava Lee",
+    from: "Chanheng Seang",
     to: "Marcus Chen",
     date: "2026-03-20",
     message: "Thanks for simplifying the dashboard navigation. The new layout made the pilot much easier to demo.",
