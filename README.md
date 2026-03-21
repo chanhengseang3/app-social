@@ -1,4 +1,4 @@
-# app-social
+# Team Connect
 
 TeamConnect is a UI-focused internal social networking app prototype for employees in a growing startup company.
 

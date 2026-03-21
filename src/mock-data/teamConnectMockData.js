@@ -205,6 +205,32 @@ export const knowledgeBaseArticles = [
     category: "Onboarding",
     updatedAt: "2026-03-12",
     owner: "People Operations",
+    summary: "A step-by-step checklist for a smooth first week at TeamConnect.",
+    sections: [
+      {
+        heading: "Before Day One",
+        paragraphs: [
+          "Confirm laptop delivery, company email access, payroll enrollment, and manager introductions before the employee starts.",
+          "Share the welcome agenda, first-week schedule, and links to core tools so the new hire can begin with context.",
+        ],
+        bullets: [
+          "Send welcome email with calendar invites",
+          "Prepare system access and badge request",
+          "Assign onboarding buddy",
+        ],
+      },
+      {
+        heading: "First Week Goals",
+        paragraphs: [
+          "Use the first week to build clarity around team responsibilities, communication norms, and product context.",
+        ],
+        bullets: [
+          "Review department goals and current priorities",
+          "Complete HR and compliance tasks",
+          "Schedule 1:1 introductions with close collaborators",
+        ],
+      },
+    ],
   },
   {
     id: "k2",
@@ -212,6 +238,32 @@ export const knowledgeBaseArticles = [
     category: "Process",
     updatedAt: "2026-03-11",
     owner: "Design",
+    summary: "The standard intake process for product and marketing design requests.",
+    sections: [
+      {
+        heading: "When to Submit a Request",
+        paragraphs: [
+          "Submit a request as soon as scope is reasonably clear and before implementation starts. Early requests improve prioritization and reduce rework.",
+        ],
+        bullets: [
+          "Include business goal and deadline",
+          "List stakeholders and approvers",
+          "Attach existing wireframes or references",
+        ],
+      },
+      {
+        heading: "Required Information",
+        paragraphs: [
+          "The design team needs enough context to understand the problem, audience, and desired outcome.",
+        ],
+        bullets: [
+          "Problem statement",
+          "Target users",
+          "Success metric",
+          "Engineering constraints",
+        ],
+      },
+    ],
   },
   {
     id: "k3",
@@ -219,6 +271,31 @@ export const knowledgeBaseArticles = [
     category: "Policy",
     updatedAt: "2026-03-08",
     owner: "Finance",
+    summary: "Rules for booking business travel and submitting reimbursable expenses.",
+    sections: [
+      {
+        heading: "Booking Rules",
+        paragraphs: [
+          "Use approved booking channels whenever possible. Travel should be economical and aligned with business needs.",
+        ],
+        bullets: [
+          "Book airfare at least 14 days in advance when possible",
+          "Choose standard hotel rates within policy",
+          "Obtain manager approval before booking international travel",
+        ],
+      },
+      {
+        heading: "Reimbursement",
+        paragraphs: [
+          "Submit expenses within 10 business days after travel. Receipts are required for all reimbursable purchases above the minimum threshold.",
+        ],
+        bullets: [
+          "Upload itemized receipts",
+          "Categorize meals, lodging, transport, and incidentals correctly",
+          "Explain any policy exception in the submission notes",
+        ],
+      },
+    ],
   },
   {
     id: "k4",
@@ -226,6 +303,32 @@ export const knowledgeBaseArticles = [
     category: "Operations",
     updatedAt: "2026-03-15",
     owner: "Operations",
+    summary: "How to complete the quarterly planning template for roadmap and staffing reviews.",
+    sections: [
+      {
+        heading: "Planning Inputs",
+        paragraphs: [
+          "Department leads should gather roadmap priorities, staffing assumptions, key risks, and cross-team dependencies before drafting the quarter plan.",
+        ],
+        bullets: [
+          "Top three outcomes",
+          "Major milestones",
+          "Risks and mitigations",
+          "Resource assumptions",
+        ],
+      },
+      {
+        heading: "Review Process",
+        paragraphs: [
+          "Drafts are reviewed by leadership, then updated after feedback before the final planning readout.",
+        ],
+        bullets: [
+          "Submit initial draft by planning week Tuesday",
+          "Join dependency review on Thursday",
+          "Publish final version in the knowledge base",
+        ],
+      },
+    ],
   },
 ];
 

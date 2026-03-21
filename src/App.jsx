@@ -36,6 +36,9 @@ function App() {
   const [activePath, setActivePath] = useState("/");
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [knowledgeQuery, setKnowledgeQuery] = useState("");
+  const [selectedKnowledgeArticleId, setSelectedKnowledgeArticleId] = useState(
+    teamConnectMockData.knowledgeBaseArticles[0].id
+  );
   const [employees, setEmployees] = useState(teamConnectMockData.employees);
   const [currentUser, setCurrentUser] = useState(teamConnectMockData.currentUser);
   const [connections, setConnections] = useState(teamConnectMockData.friendConnections);
@@ -76,6 +79,10 @@ function App() {
     if (!query) return true;
     return `${article.title} ${article.category} ${article.owner}`.toLowerCase().includes(query);
   });
+  const selectedKnowledgeArticle =
+    filteredKnowledgeArticles.find((article) => article.id === selectedKnowledgeArticleId) ??
+    filteredKnowledgeArticles[0] ??
+    teamConnectMockData.knowledgeBaseArticles[0];
 
   const handleLogin = (event) => {
     event.preventDefault();
@@ -433,7 +440,9 @@ function App() {
         {activePath === "/knowledge-base" && (
           <KnowledgeBaseView
             articles={filteredKnowledgeArticles}
+            onSelectArticle={setSelectedKnowledgeArticleId}
             query={knowledgeQuery}
+            selectedArticle={selectedKnowledgeArticle}
             setQuery={setKnowledgeQuery}
           />
         )}
@@ -850,10 +859,10 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
   );
 }
 
-function KnowledgeBaseView({ articles, query, setQuery }) {
+function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, setQuery }) {
   return (
-    <div className="view-grid">
-      <section className="panel panel-span-2">
+    <div className="knowledge-layout">
+      <section className="panel knowledge-list-panel">
         <div className="section-heading">
           <h3>Knowledge Base</h3>
           <span className="soft-tag">{articles.length} articles</span>
@@ -867,15 +876,56 @@ function KnowledgeBaseView({ articles, query, setQuery }) {
             placeholder="Find an article"
           />
         </label>
-        <div className="knowledge-grid">
+        <div className="stack-list">
           {articles.map((article) => (
-            <article className="list-card" key={article.id}>
+            <button
+              className={article.id === selectedArticle.id ? "knowledge-item is-active" : "knowledge-item"}
+              key={article.id}
+              onClick={() => onSelectArticle(article.id)}
+              type="button"
+            >
               <strong>{article.title}</strong>
               <p>
                 {article.category} • {article.owner}
               </p>
               <p className="muted-copy">Updated {article.updatedAt}</p>
+            </button>
+          ))}
+          {articles.length === 0 && (
+            <article className="list-card">
+              <strong>No matching articles</strong>
+              <p>Try a different search term to find policies, guides, or onboarding documents.</p>
             </article>
+          )}
+        </div>
+      </section>
+
+      <section className="panel panel-span-2 document-panel">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Document</span>
+            <h3>{selectedArticle.title}</h3>
+          </div>
+          <span className="soft-tag">{selectedArticle.category}</span>
+        </div>
+        <div className="document-meta">
+          <span>Owner: {selectedArticle.owner}</span>
+          <span>Updated: {selectedArticle.updatedAt}</span>
+        </div>
+        <p className="document-summary">{selectedArticle.summary}</p>
+        <div className="document-body">
+          {selectedArticle.sections.map((section) => (
+            <section className="document-section" key={section.heading}>
+              <h4>{section.heading}</h4>
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+              <ul className="document-bullets">
+                {section.bullets.map((bullet) => (
+                  <li key={bullet}>{bullet}</li>
+                ))}
+              </ul>
+            </section>
           ))}
         </div>
       </section>
