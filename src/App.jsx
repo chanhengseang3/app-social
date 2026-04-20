@@ -20,6 +20,14 @@ const viewTitles = {
   "/feedback": "Employee voice, complaints, and ideas",
 };
 
+function formatDisplayDate(dateString) {
+  return new Date(`${dateString}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function App() {
   const [authMode, setAuthMode] = useState("login");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -501,7 +509,7 @@ function HomeView({
         </form>
       </section>
 
-      <section className="panel">
+      <section className="panel distinction-panel distinction-panel-announcements">
         <div className="section-heading">
           <div>
             <span className="eyebrow">For You</span>
@@ -559,29 +567,48 @@ function HomeView({
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel distinction-panel distinction-panel-announcements">
         <div className="section-heading">
-          <h3>Announcements</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow eyebrow-announcements">Official Updates</span>
+            <h3>Announcements</h3>
+            <p className="section-intro">Operational notices, HR deadlines, and internal actions that need attention.</p>
+          </div>
           <span className="soft-tag">{announcements.length}</span>
         </div>
         <div className="stack-list">
           {announcements.slice(0, 2).map((item) => (
-            <article className="list-card" key={item.id}>
+            <article className="list-card distinction-card announcement-card" key={item.id}>
+              <div className="distinction-card-header">
+                <span className="distinction-chip distinction-chip-announcement">Official notice</span>
+                <span className="muted-copy">{formatDisplayDate(item.date)}</span>
+              </div>
               <strong>{item.title}</strong>
+              <p className="distinction-meta">
+                {item.category} team • Posted by {item.author}
+              </p>
               <p>{item.summary}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel distinction-panel distinction-panel-news">
         <div className="section-heading">
-          <h3>Trending News</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow eyebrow-news">Company Highlights</span>
+            <h3>Trending News</h3>
+            <p className="section-intro">Momentum stories, team wins, and business signals from across the company.</p>
+          </div>
           <span className="soft-tag">Highlights</span>
         </div>
         <div className="stack-list">
           {companyNews.slice(0, 2).map((item) => (
-            <article className="list-card" key={item.id}>
+            <article className="list-card distinction-card news-card" key={item.id}>
+              <div className="distinction-card-header">
+                <span className="distinction-chip distinction-chip-news">{item.tag}</span>
+                <span className="muted-copy">{formatDisplayDate(item.date)}</span>
+              </div>
               <strong>{item.headline}</strong>
               <p>{item.excerpt}</p>
             </article>
@@ -776,16 +803,33 @@ function MessagesView({
 function AnnouncementsView({ announcements }) {
   return (
     <div className="view-grid">
+      <section className="panel panel-span-full distinction-banner distinction-banner-announcements">
+        <div className="section-heading">
+          <div className="section-heading-copy">
+            <span className="eyebrow eyebrow-announcements">Official Updates</span>
+            <h3>Announcements keep employees aligned on internal actions.</h3>
+            <p className="section-intro">
+              Use this space for policy changes, office logistics, deadlines, and leadership notices that may
+              require a response.
+            </p>
+          </div>
+          <span className="soft-tag">Internal notices</span>
+        </div>
+      </section>
       {announcements.map((item) => (
-        <section className="panel" key={item.id}>
+        <section className="panel distinction-panel distinction-panel-announcements" key={item.id}>
           <div className="section-heading">
-            <h3>{item.title}</h3>
+            <div className="section-heading-copy">
+              <span className="distinction-chip distinction-chip-announcement">Official notice</span>
+              <h3>{item.title}</h3>
+            </div>
             <span className="soft-tag">{item.category}</span>
           </div>
           <p>{item.summary}</p>
-          <p className="muted-copy">
-            {item.author} • {item.date}
-          </p>
+          <div className="distinction-meta-row">
+            <p className="muted-copy">Shared by {item.author}</p>
+            <p className="muted-copy">{formatDisplayDate(item.date)}</p>
+          </div>
         </section>
       ))}
     </div>
@@ -795,14 +839,33 @@ function AnnouncementsView({ announcements }) {
 function NewsView({ items }) {
   return (
     <div className="view-grid">
+      <section className="panel panel-span-full distinction-banner distinction-banner-news">
+        <div className="section-heading">
+          <div className="section-heading-copy">
+            <span className="eyebrow eyebrow-news">Company Highlights</span>
+            <h3>News tracks progress, milestones, and stories worth sharing.</h3>
+            <p className="section-intro">
+              Use this section for business momentum, team achievements, and broader updates that inform
+              rather than instruct.
+            </p>
+          </div>
+          <span className="soft-tag">Business updates</span>
+        </div>
+      </section>
       {items.map((item) => (
-        <section className="panel" key={item.id}>
+        <section className="panel distinction-panel distinction-panel-news" key={item.id}>
           <div className="section-heading">
-            <h3>{item.headline}</h3>
+            <div className="section-heading-copy">
+              <span className="distinction-chip distinction-chip-news">Company highlight</span>
+              <h3>{item.headline}</h3>
+            </div>
             <span className="soft-tag">{item.tag}</span>
           </div>
           <p>{item.excerpt}</p>
-          <p className="muted-copy">{item.date}</p>
+          <div className="distinction-meta-row">
+            <p className="muted-copy">Highlight area: {item.tag}</p>
+            <p className="muted-copy">{formatDisplayDate(item.date)}</p>
+          </div>
         </section>
       ))}
     </div>
