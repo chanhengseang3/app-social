@@ -44,6 +44,7 @@ function App() {
   const [activePath, setActivePath] = useState("/");
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [knowledgeQuery, setKnowledgeQuery] = useState("");
+  const [knowledgeCategory, setKnowledgeCategory] = useState("All categories");
   const [selectedKnowledgeArticleId, setSelectedKnowledgeArticleId] = useState(
     teamConnectMockData.knowledgeBaseArticles[0].id
   );
@@ -67,8 +68,17 @@ function App() {
   });
   const [messageDraft, setMessageDraft] = useState("");
   const [postDraft, setPostDraft] = useState("");
+  const [actionNotice, setActionNotice] = useState({
+    messages: "",
+    recognition: "",
+    feedback: "",
+  });
   const deferredDirectoryQuery = useDeferredValue(directoryQuery);
   const deferredKnowledgeQuery = useDeferredValue(knowledgeQuery);
+  const knowledgeCategories = [
+    "All categories",
+    ...new Set(teamConnectMockData.knowledgeBaseArticles.map((article) => article.category)),
+  ];
 
   const selectedThread = chatThreads.find((thread) => thread.id === selectedThreadId) ?? chatThreads[0];
   const selectedMessages = messagesByThread[selectedThread.id] ?? [];
@@ -85,8 +95,11 @@ function App() {
 
   const filteredKnowledgeArticles = teamConnectMockData.knowledgeBaseArticles.filter((article) => {
     const query = deferredKnowledgeQuery.trim().toLowerCase();
-    if (!query) return true;
-    return `${article.title} ${article.category} ${article.owner}`.toLowerCase().includes(query);
+    const matchesQuery = !query
+      ? true
+      : `${article.title} ${article.category} ${article.owner} ${article.summary}`.toLowerCase().includes(query);
+    const matchesCategory = knowledgeCategory === "All categories" || article.category === knowledgeCategory;
+    return matchesQuery && matchesCategory;
   });
   const selectedKnowledgeArticle =
     filteredKnowledgeArticles.find((article) => article.id === selectedKnowledgeArticleId) ??
@@ -149,11 +162,12 @@ function App() {
   const handleRecognitionSubmit = (event) => {
     event.preventDefault();
     if (!recognitionForm.message.trim()) return;
+    const recipient = recognitionForm.to;
     setRecognitionPosts((prev) => [
       {
         id: `r${prev.length + 1}`,
         from: currentUser.name,
-        to: recognitionForm.to,
+        to: recipient,
         type: recognitionForm.type,
         date: new Date().toISOString().slice(0, 10),
         message: recognitionForm.message.trim(),
@@ -161,6 +175,10 @@ function App() {
       ...prev,
     ]);
     setRecognitionForm((prev) => ({ ...prev, message: "" }));
+    setActionNotice((prev) => ({
+      ...prev,
+      recognition: `Recognition posted for ${recipient}.`,
+    }));
   };
 
   const handleFeedbackSubmit = (event) => {
@@ -178,6 +196,10 @@ function App() {
       ...prev,
     ]);
     setFeedbackForm((prev) => ({ ...prev, title: "" }));
+    setActionNotice((prev) => ({
+      ...prev,
+      feedback: "Feedback submitted and added to the tracker.",
+    }));
   };
 
   const handlePostSubmit = (event) => {
@@ -204,6 +226,7 @@ function App() {
   const handleMessageSubmit = (event) => {
     event.preventDefault();
     if (!messageDraft.trim()) return;
+    const threadName = selectedThread.name;
     setMessagesByThread((prev) => ({
       ...prev,
       [selectedThread.id]: [
@@ -217,6 +240,10 @@ function App() {
       ],
     }));
     setMessageDraft("");
+    setActionNotice((prev) => ({
+      ...prev,
+      messages: `Message sent in ${threadName}.`,
+    }));
   };
 
   const handleLogout = () => {
@@ -420,6 +447,7 @@ function App() {
         )}
         {activePath === "/messages" && (
           <MessagesView
+            actionNotice={actionNotice.messages}
             currentUser={currentUser}
             messageDraft={messageDraft}
             messages={selectedMessages}
@@ -439,6 +467,7 @@ function App() {
         {activePath === "/news" && <NewsView items={teamConnectMockData.companyNews} />}
         {activePath === "/recognition" && (
           <RecognitionView
+            actionNotice={actionNotice.recognition}
             currentUser={currentUser}
             employees={employees}
             form={recognitionForm}
@@ -450,7 +479,10 @@ function App() {
         {activePath === "/knowledge-base" && (
           <KnowledgeBaseView
             articles={filteredKnowledgeArticles}
+            categories={knowledgeCategories}
+            category={knowledgeCategory}
             onSelectArticle={setSelectedKnowledgeArticleId}
+            onSelectCategory={setKnowledgeCategory}
             query={knowledgeQuery}
             selectedArticle={selectedKnowledgeArticle}
             setQuery={setKnowledgeQuery}
@@ -458,6 +490,7 @@ function App() {
         )}
         {activePath === "/feedback" && (
           <FeedbackView
+            actionNotice={actionNotice.feedback}
             feedbackForm={feedbackForm}
             feedbackItems={feedbackItems}
             onFormChange={setFeedbackForm}
@@ -734,6 +767,7 @@ function DirectoryView({ connectionIds, employees, onToggleConnection, query, se
 }
 
 function MessagesView({
+  actionNotice,
   currentUser,
   messageDraft,
   messages,
@@ -748,7 +782,11 @@ function MessagesView({
     <div className="messages-layout">
       <section className="panel thread-list-panel">
         <div className="section-heading">
-          <h3>Conversations</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow">Inbox</span>
+            <h3>Conversations</h3>
+            <p className="section-intro">Open a thread to review recent context before sending a reply.</p>
+          </div>
           <span className="soft-tag">{threads.length} threads</span>
         </div>
         <div className="thread-list">
@@ -769,9 +807,14 @@ function MessagesView({
 
       <section className="panel conversation-panel">
         <div className="section-heading">
-          <h3>Thread Messages</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow">Reply</span>
+            <h3>Thread Messages</h3>
+            <p className="section-intro">Messages are saved in local state for the prototype, with immediate visual confirmation after send.</p>
+          </div>
           <span className="soft-tag">Public and private demo chats</span>
         </div>
+        {actionNotice ? <p className="inline-notice">{actionNotice}</p> : null}
         <div className="conversation">
           {messages.map((message) => {
             const sender = users.find((user) => user.id === message.senderId);
@@ -789,12 +832,13 @@ function MessagesView({
             type="text"
             value={messageDraft}
             onChange={(event) => onMessageDraftChange(event.target.value)}
-            placeholder="Write a reply for the demo"
+            placeholder="Write a clear reply that keeps the team moving"
           />
           <button className="primary-button" type="submit">
             Send
           </button>
         </form>
+        <p className="form-helper">Use the reply box for a concise update, answer, or next step.</p>
       </section>
     </div>
   );
@@ -872,14 +916,23 @@ function NewsView({ items }) {
   );
 }
 
-function RecognitionView({ currentUser, employees, form, onChange, onSubmit, posts }) {
+function RecognitionView({ actionNotice, currentUser, employees, form, onChange, onSubmit, posts }) {
   return (
     <div className="view-grid">
       <section className="panel">
-        <h3>Send Recognition</h3>
+        <div className="section-heading-copy">
+          <span className="eyebrow">Recognition</span>
+          <h3>Send Recognition</h3>
+          <p className="section-intro">Share a specific contribution, behavior, or team win so the appreciation feels clear and meaningful.</p>
+        </div>
+        <div className="guidance-card">
+          <strong>What to write</strong>
+          <p>Name the action, explain why it mattered, and keep the note tied to a recent result.</p>
+        </div>
+        {actionNotice ? <p className="inline-notice">{actionNotice}</p> : null}
         <form className="stack-form" onSubmit={onSubmit}>
           <label>
-            Recognize
+            Recognize a teammate
             <select value={form.to} onChange={(event) => onChange((prev) => ({ ...prev, to: event.target.value }))}>
               {employees
                 .filter((employee) => employee.name !== currentUser.name)
@@ -889,7 +942,7 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
             </select>
           </label>
           <label>
-            Recognition Type
+            Recognition type
             <select value={form.type} onChange={(event) => onChange((prev) => ({ ...prev, type: event.target.value }))}>
               <option>Recommend</option>
               <option>Send Kudos</option>
@@ -897,23 +950,27 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
             </select>
           </label>
           <label>
-            Message
+            Appreciation message
             <textarea
               rows="4"
               value={form.message}
               onChange={(event) => onChange((prev) => ({ ...prev, message: event.target.value }))}
-              placeholder="Highlight a recent contribution"
+              placeholder="Example: Thank you for organizing the planning review and keeping every team aligned on deadlines."
             />
           </label>
           <button className="primary-button" type="submit">
             Post Recognition
           </button>
         </form>
+        <p className="form-helper">Recognition appears instantly in the feed after you post it.</p>
       </section>
 
       <section className="panel panel-span-2">
         <div className="section-heading">
-          <h3>Recognition Feed</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow">Recognition Feed</span>
+            <h3>Recognition Feed</h3>
+          </div>
           <span className="soft-tag">{posts.length} posts</span>
         </div>
         <div className="stack-list">
@@ -935,12 +992,25 @@ function RecognitionView({ currentUser, employees, form, onChange, onSubmit, pos
   );
 }
 
-function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, setQuery }) {
+function KnowledgeBaseView({
+  articles,
+  categories,
+  category,
+  onSelectArticle,
+  onSelectCategory,
+  query,
+  selectedArticle,
+  setQuery,
+}) {
   return (
     <div className="knowledge-layout">
       <section className="panel knowledge-list-panel">
         <div className="section-heading">
-          <h3>Knowledge Base</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow">Reference Library</span>
+            <h3>Knowledge Base</h3>
+            <p className="section-intro">Scan by category, preview each article summary, and then open the full document.</p>
+          </div>
           <span className="soft-tag">{articles.length} articles</span>
         </div>
         <label className="search-field">
@@ -952,6 +1022,18 @@ function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, 
             placeholder="Find an article"
           />
         </label>
+        <div className="filter-row" aria-label="Knowledge base categories">
+          {categories.map((item) => (
+            <button
+              className={item === category ? "filter-chip is-active" : "filter-chip"}
+              key={item}
+              onClick={() => onSelectCategory(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
         <div className="stack-list">
           {articles.map((article) => (
             <button
@@ -964,6 +1046,8 @@ function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, 
               <p>
                 {article.category} • {article.owner}
               </p>
+              <p className="knowledge-preview">{article.summary}</p>
+              <p className="knowledge-supporting-copy">{article.sections.length} sections</p>
               <p className="muted-copy">Updated {article.updatedAt}</p>
             </button>
           ))}
@@ -978,9 +1062,10 @@ function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, 
 
       <section className="panel panel-span-2 document-panel">
         <div className="section-heading">
-          <div>
+          <div className="section-heading-copy">
             <span className="eyebrow">Document</span>
             <h3>{selectedArticle.title}</h3>
+            <p className="section-intro">{selectedArticle.summary}</p>
           </div>
           <span className="soft-tag">{selectedArticle.category}</span>
         </div>
@@ -1009,14 +1094,19 @@ function KnowledgeBaseView({ articles, onSelectArticle, query, selectedArticle, 
   );
 }
 
-function FeedbackView({ feedbackForm, feedbackItems, onFormChange, onSubmit }) {
+function FeedbackView({ actionNotice, feedbackForm, feedbackItems, onFormChange, onSubmit }) {
   return (
     <div className="view-grid">
       <section className="panel">
-        <h3>Submit Feedback</h3>
+        <div className="section-heading-copy">
+          <span className="eyebrow">Employee Voice</span>
+          <h3>Submit Feedback</h3>
+          <p className="section-intro">Choose the right type, summarize the issue clearly, and the tracker will show it immediately.</p>
+        </div>
+        {actionNotice ? <p className="inline-notice">{actionNotice}</p> : null}
         <form className="stack-form" onSubmit={onSubmit}>
           <label>
-            Type
+            Feedback type
             <select
               value={feedbackForm.type}
               onChange={(event) => onFormChange((prev) => ({ ...prev, type: event.target.value }))}
@@ -1032,18 +1122,22 @@ function FeedbackView({ feedbackForm, feedbackItems, onFormChange, onSubmit }) {
               rows="4"
               value={feedbackForm.title}
               onChange={(event) => onFormChange((prev) => ({ ...prev, title: event.target.value }))}
-              placeholder="Share an idea or concern"
+              placeholder="Example: Add clearer notification badges so message updates are easier to notice."
             />
           </label>
           <button className="primary-button" type="submit">
             Submit
           </button>
         </form>
+        <p className="form-helper">Use one concise summary per submission so the tracker is easy to scan.</p>
       </section>
 
       <section className="panel panel-span-2">
         <div className="section-heading">
-          <h3>Feedback Tracker</h3>
+          <div className="section-heading-copy">
+            <span className="eyebrow">Tracker</span>
+            <h3>Feedback Tracker</h3>
+          </div>
           <span className="soft-tag">{feedbackItems.length} records</span>
         </div>
         <div className="stack-list">
