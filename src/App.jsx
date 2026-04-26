@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useState } from "react";
 import teamConnectMockData from "./mock-data/teamConnectMockData";
 
 const profileNavigation = { id: "nav-profile", label: "Profile", path: "/profile" };
@@ -20,6 +20,9 @@ const viewTitles = {
   "/feedback": "Employee voice, complaints, and ideas",
 };
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api";
+const sessionStorageKey = "teamconnect-auth-session";
+
 function formatDisplayDate(dateString) {
   return new Date(`${dateString}T12:00:00`).toLocaleDateString("en-US", {
     month: "short",
@@ -28,19 +31,55 @@ function formatDisplayDate(dateString) {
   });
 }
 
+function getInitials(name) {
+  return (name || "NE")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function buildUiUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    initials: getInitials(user.name),
+    role: user.role || "Team Member",
+    department: user.department || "Operations",
+    location: "Remote",
+    bio: "TeamConnect member connected through the live API.",
+    status: "Online",
+  };
+}
+
+function readStoredSession() {
+  try {
+    const storedValue = window.localStorage.getItem(sessionStorageKey);
+    if (!storedValue) return null;
+    return JSON.parse(storedValue);
+  } catch {
+    return null;
+  }
+}
+
 function App() {
   const [authMode, setAuthMode] = useState("login");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginForm, setLoginForm] = useState({
-    email: teamConnectMockData.demoCredentials.email,
-    password: teamConnectMockData.demoCredentials.password,
+    email: "",
+    password: "",
   });
   const [signupForm, setSignupForm] = useState({
     name: "",
     email: "",
+    password: "",
     department: "Operations",
     role: "",
   });
+  const [authFeedback, setAuthFeedback] = useState("");
+  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [activePath, setActivePath] = useState("/");
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [knowledgeQuery, setKnowledgeQuery] = useState("");
@@ -80,6 +119,24 @@ function App() {
     ...new Set(teamConnectMockData.knowledgeBaseArticles.map((article) => article.category)),
   ];
 
+  const switchAuthMode = (mode) => {
+    setAuthFeedback("");
+    setAuthMode(mode);
+  };
+
+  useEffect(() => {
+    const storedSession = readStoredSession();
+    if (!storedSession?.user || !storedSession?.accessToken) return;
+
+    const sessionUser = buildUiUser(storedSession.user);
+    setCurrentUser(sessionUser);
+    setEmployees((prev) => {
+      const otherEmployees = prev.filter((employee) => employee.id !== sessionUser.id);
+      return [sessionUser, ...otherEmployees];
+    });
+    setIsAuthenticated(true);
+  }, []);
+
   const selectedThread = chatThreads.find((thread) => thread.id === selectedThreadId) ?? chatThreads[0];
   const selectedMessages = messagesByThread[selectedThread.id] ?? [];
   const connectionIds = connections
@@ -106,37 +163,82 @@ function App() {
     filteredKnowledgeArticles[0] ??
     teamConnectMockData.knowledgeBaseArticles[0];
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    if (
-      loginForm.email === teamConnectMockData.demoCredentials.email &&
-      loginForm.password === teamConnectMockData.demoCredentials.password
-    ) {
+    setAuthFeedback("");
+    setIsSubmittingAuth(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginForm),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Login failed");
+      }
+
+      const sessionUser = buildUiUser(payload.user);
+      window.localStorage.setItem(sessionStorageKey, JSON.stringify(payload));
+      setCurrentUser(sessionUser);
+      setEmployees((prev) => {
+        const otherEmployees = prev.filter((employee) => employee.id !== sessionUser.id);
+        return [sessionUser, ...otherEmployees];
+      });
       setIsAuthenticated(true);
+    } catch (error) {
+      setAuthFeedback(error instanceof Error ? error.message : "Unable to login right now");
+    } finally {
+      setIsSubmittingAuth(false);
     }
   };
 
-  const handleSignup = (event) => {
+  const handleSignup = async (event) => {
     event.preventDefault();
-    const newUser = {
-      id: `u${employees.length + 1}`,
-      name: signupForm.name || "New Employee",
-      initials: (signupForm.name || "NE")
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase(),
-      role: signupForm.role || "Team Member",
-      department: signupForm.department,
-      location: "Remote",
-      bio: "New TeamConnect member exploring the employee network.",
-      status: "Online",
-    };
+    setAuthFeedback("");
+    setIsSubmittingAuth(true);
 
-    setEmployees((prev) => [newUser, ...prev]);
-    setCurrentUser(newUser);
-    setIsAuthenticated(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signupForm),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = Array.isArray(payload?.message) ? payload.message[0] : payload?.message;
+        throw new Error(message || "Registration failed");
+      }
+
+      const sessionUser = buildUiUser(payload.user);
+      window.localStorage.setItem(sessionStorageKey, JSON.stringify(payload));
+      setCurrentUser(sessionUser);
+      setEmployees((prev) => {
+        const otherEmployees = prev.filter((employee) => employee.id !== sessionUser.id);
+        return [sessionUser, ...otherEmployees];
+      });
+      setIsAuthenticated(true);
+      setSignupForm({
+        name: "",
+        email: "",
+        password: "",
+        department: "Operations",
+        role: "",
+      });
+    } catch (error) {
+      setAuthFeedback(error instanceof Error ? error.message : "Unable to register right now");
+    } finally {
+      setIsSubmittingAuth(false);
+    }
   };
 
   const handleNavigate = (path) => {
@@ -247,9 +349,11 @@ function App() {
   };
 
   const handleLogout = () => {
+    window.localStorage.removeItem(sessionStorageKey);
     setIsAuthenticated(false);
     setActivePath("/");
     setAuthMode("login");
+    setAuthFeedback("");
   };
 
   if (!isAuthenticated) {
@@ -271,14 +375,14 @@ function App() {
             <div className="auth-toggle">
               <button
                 className={authMode === "login" ? "is-active" : ""}
-                onClick={() => setAuthMode("login")}
+                onClick={() => switchAuthMode("login")}
                 type="button"
               >
                 Login
               </button>
               <button
                 className={authMode === "signup" ? "is-active" : ""}
-                onClick={() => setAuthMode("signup")}
+                onClick={() => switchAuthMode("signup")}
                 type="button"
               >
                 Sign Up
@@ -292,6 +396,7 @@ function App() {
                   <input
                     type="email"
                     value={loginForm.email}
+                    required
                     onChange={(event) => setLoginForm((prev) => ({ ...prev, email: event.target.value }))}
                   />
                 </label>
@@ -300,15 +405,16 @@ function App() {
                   <input
                     type="password"
                     value={loginForm.password}
+                    required
                     onChange={(event) => setLoginForm((prev) => ({ ...prev, password: event.target.value }))}
                   />
                 </label>
-                <button className="primary-button" type="submit">
-                  Enter Demo
+                {authFeedback ? <p className="auth-feedback">{authFeedback}</p> : null}
+                <button className="primary-button" type="submit" disabled={isSubmittingAuth}>
+                  {isSubmittingAuth ? "Signing In..." : "Login"}
                 </button>
                 <p className="support-copy">
-                  Demo credentials: {teamConnectMockData.demoCredentials.email} /{" "}
-                  {teamConnectMockData.demoCredentials.password}
+                  API: {apiBaseUrl}
                 </p>
               </form>
             ) : (
@@ -318,6 +424,7 @@ function App() {
                   <input
                     type="text"
                     value={signupForm.name}
+                    required
                     onChange={(event) => setSignupForm((prev) => ({ ...prev, name: event.target.value }))}
                     placeholder="Taylor Morgan"
                   />
@@ -327,8 +434,20 @@ function App() {
                   <input
                     type="email"
                     value={signupForm.email}
+                    required
                     onChange={(event) => setSignupForm((prev) => ({ ...prev, email: event.target.value }))}
                     placeholder="taylor@teamconnect.demo"
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    value={signupForm.password}
+                    required
+                    minLength={8}
+                    onChange={(event) => setSignupForm((prev) => ({ ...prev, password: event.target.value }))}
+                    placeholder="Minimum 8 characters"
                   />
                 </label>
                 <label>
@@ -353,8 +472,9 @@ function App() {
                     <option>Human Resources</option>
                   </select>
                 </label>
-                <button className="primary-button" type="submit">
-                  Create Demo Profile
+                {authFeedback ? <p className="auth-feedback">{authFeedback}</p> : null}
+                <button className="primary-button" type="submit" disabled={isSubmittingAuth}>
+                  {isSubmittingAuth ? "Creating Account..." : "Create Account"}
                 </button>
               </form>
             )}
